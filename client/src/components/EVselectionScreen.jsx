@@ -1,24 +1,34 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import {Box,Typography,Card,CardContent,Chip,LinearProgress,Container} from "@mui/material";
+import { Box, Typography, Card, CardContent, Chip, LinearProgress, Container } from "@mui/material";
 import DirectionsBusIcon from "@mui/icons-material/DirectionsBus";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { useNavigate } from "react-router-dom";
-
 function EVSelectScreen() {
     const navigate = useNavigate();
     const [status, setStatus] = useState("Unknown");
     const [battery, setBattery] = useState(null);
-    
+
+    const API_URL = import.meta.env.VITE_API || "http://localhost:5050";
+
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await axios.get("http://localhost:5050/api/live");
+                const res = await axios.get(`${API_URL}/api/live`);
+                console.log("API DATA:", res.data);
                 setStatus(res.data?.status || "Unknown");
-                setBattery(res.data?.attributes?.battery ?? null);
-            } catch (err){console.log(err);}
+                // battery extraction
+                const battery =
+                    res.data?.attributes?.battery ??
+                    res.data?.battery ??
+                    null;
+                setBattery(battery);
+            } catch (err) {
+                console.log(err);
+            }
         };
+
         fetchData();
     }, []);
 
@@ -30,7 +40,7 @@ function EVSelectScreen() {
             <Typography variant="h4" fontWeight="bold">Campus Fleet</Typography>
             <Typography color="text.secondary" sx={{ mb: 4 }}> 3 vehicles registered · 1 active
             </Typography>
-            <Card sx={{mb: 3,borderRadius: 4,border: "2px solid #f2b66d",boxShadow: "none"}}>
+            <Card sx={{ mb: 3, borderRadius: 4, border: "2px solid #f2b66d", boxShadow: "none" }}>
                 <CardContent onClick={() => navigate("/dashboard")}
                     sx={{ cursor: "pointer" }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -40,21 +50,22 @@ function EVSelectScreen() {
                         <Box sx={{ flexGrow: 1 }}>
                             <Typography fontWeight="bold">Campus Shuttle Alpha </Typography>
                         </Box>
-                        <Chip label={status} color={status === "Online" ? "success" : "default"} size="small"/>
+                        <Chip label={status} color={status === "Online" ? "success" : "default"} size="small" />
                         <ArrowForwardIosIcon sx={{ fontSize: 16 }} />
                     </Box>
                     <Box sx={{ mt: 3 }}>
-                        <Typography sx={{display:"flex",justifyContent:"space-between",mb: 1}}>
+                        <Typography sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
                             Battery level
                             <span style={{
-                                    color: battery !== null && battery < 10 ? "red" : "#2e7d32",
-                                    fontWeight: "bold"}}>
+                                color: battery !== null && battery < 10 ? "red" : "#2e7d32",
+                                fontWeight: "bold"
+                            }}>
                                 {battery !== null ? `${battery}%` : "--%"}{" "}
                                 {battery !== null && battery < 10 ? "— Needs charge" : ""}
                             </span>
                         </Typography>
                         <LinearProgress variant="determinate" value={battery ?? 0}
-                            sx={{height: 8,borderRadius: 5}}/>
+                            sx={{ height: 8, borderRadius: 5 }} />
                     </Box>
                 </CardContent>
             </Card>
@@ -76,7 +87,7 @@ function EVSelectScreen() {
                 </CardContent>
             </Card>
             <Card
-                sx={{borderRadius: 4,background: "#fff7e6",border: "1px solid #f3c27a"}}>
+                sx={{ borderRadius: 4, background: "#fff7e6", border: "1px solid #f3c27a" }}>
                 <CardContent sx={{ display: "flex", gap: 2, alignItems: "center" }}>
                     <InfoOutlinedIcon />
                     <Typography>
@@ -87,5 +98,4 @@ function EVSelectScreen() {
         </Container>
     );
 }
-
 export default EVSelectScreen;
