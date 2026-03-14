@@ -5,7 +5,9 @@ import MapContainer from "./Map/MapContainer";
 import EVInfoPanel from "./Dashboard/EVInfoPanel";
 import ControlButtons from "./Dashboard/ControlButtons";
 import { calculateETA } from "../utils/etaUtils";
+import Footer from "./Footer";
 function MapView() {
+  const API_URL = import.meta.env.VITE_API || "http://localhost:5050";
   const [status, setStatus] = useState("Unknown");
   const [lastUpdate, setLastUpdate] = useState(null);
   const [position, setPosition] = useState(null);
@@ -22,69 +24,8 @@ function MapView() {
   const prevPos = useRef(null);
   const prevTime = useRef(null);
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: "AIzaSyAJBoUwZIgzPlgQfpRIcFsBlALaGTP9pjA"
-  });
-
-  const calculateRoute = (user, ev) => {
-    if (!user || !ev || !window.google) return;
-    const directionsService = new window.google.maps.DirectionsService();
-    directionsService.route(
-      {
-        origin: user,
-        destination: ev,
-        travelMode: window.google.maps.TravelMode.DRIVING,
-      },
-      (result, status) => {
-        if (status === "OK") {
-          setDirections(result);
-          const leg = result.routes[0].legs[0];
-          setDistance(leg.distance.value);
-          setEta(leg.duration.value);
-        }
-      }
-    );
-  };
-  const fetchLive = async () => {
-    try {
-      const res = await axios.get("http://localhost:5050/api/live");
-      const newPos = {
-        lat: res.data.latitude,
-        lng: res.data.longitude
-      };
-        const now = Date.now();
-  if (prevPos.current && prevTime.current) {
-    const dx = newPos.lat - prevPos.current.lat;
-    const dy = newPos.lng - prevPos.current.lng;
-    const dist = Math.sqrt(dx * dx + dy * dy) * 111139;
-    const timeDiff = (now - prevTime.current) / 1000;
-    const newSpeed = dist / timeDiff;
-    setSpeed(newSpeed);
-  }
-  prevPos.current = newPos; 
-  prevTime.current= now ; 
-      
-      setStatus(res.data?.status || "Unknown");
-      setBattery(res.data?.attributes?.battery);
-      setLastUpdate(
-        new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit"
-        })
-      );
-      setPosition(newPos);
-      setAnimatedPos(newPos);
-      if (userLocation) {
-        calculateRoute(userLocation, newPos);
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
-  useEffect(() => {
-    fetchLive();
-    const interval = setInterval(fetchLive, 1000);
-    return () => clearInterval(interval);
-  }, [userLocation]);
+  googleMapsApiKey: import.meta.env.VITE_DIRECTION_KEY
+});
   useEffect(() => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
@@ -105,6 +46,75 @@ function MapView() {
       }
     );
   }, []);
+  const calculateRoute = (user, ev) => {
+    if (!user || !ev || !window.google) return;
+    const directionsService = new window.google.maps.DirectionsService();
+    directionsService.route({
+      origin: user,
+      destination: ev,
+      travelMode: window.google.maps.TravelMode.DRIVING
+    },
+      (result, status) => {
+        if (status === "OK") {
+          setDirections(result);
+          const leg = result.routes[0].legs[0];
+          setDistance(leg.distance.value);
+          setEta(leg.duration.value);
+        }
+      }
+    );
+  };
+  const fetchLive = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/live`);
+      const newPos = {
+        lat: res.data.latitude,
+        lng: res.data.longitude
+      };
+      const now = Date.now();
+      if (prevPos.current && prevTime.current) {
+        const dx = newPos.lat - prevPos.current.lat;
+        const dy = newPos.lng - prevPos.current.lng;
+        const dist = Math.sqrt(dx * dx + dy * dy) * 111139;
+        const timeDiff = (now - prevTime.current) / 1000;
+        const newSpeed = dist / timeDiff;
+        setSpeed(newSpeed);
+      }
+      prevPos.current = newPos;
+      prevTime.current = now;
+      setStatus(res.data?.status || "Unknown");
+      setBattery(res.data?.attributes?.battery);
+      setLastUpdate(
+        new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit"
+        })
+      );
+      setPosition(newPos);
+      if (userLocation) calculateRoute(userLocation, newPos);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  useEffect(() => {
+    fetchLive();
+    const interval = setInterval(fetchLive, 1000);
+    return () => clearInterval(interval);
+  }, [userLocation]);
+  useEffect(() => {
+    if (!position) return;
+    let start = animatedPos || position;
+    let end = position;
+    let startTime = performance.now();
+    function animate(time) {
+      let progress = Math.min((time - startTime) / 1000, 1);
+      const lat = start.lat + (end.lat - start.lat) * progress;
+      const lng = start.lng + (end.lng - start.lng) * progress;
+      setAnimatedPos({ lat, lng });
+      if (progress < 1) requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+  }, [position]);
   useEffect(() => {
     if (!mapRef.current || !animatedPos || !userLocation || boundsInitialized.current) return;
     const bounds = new window.google.maps.LatLngBounds();
@@ -116,9 +126,16 @@ function MapView() {
   const followEV = () => {
     if (!mapRef.current || !animatedPos) return;
     mapRef.current.panTo(animatedPos);
+    mapRef.current.setZoom(18);
   };
-
-  if (!isLoaded) return <div>Loading Map...</div>
+  const recenterPath = () => {
+    if (!mapRef.current) return;
+    const bounds = new window.google.maps.LatLngBounds();
+    if (animatedPos) bounds.extend(animatedPos);
+    if (userLocation) bounds.extend(userLocation);
+    if (!bounds.isEmpty()) mapRef.current.fitBounds(bounds);
+  };
+  if (!isLoaded) return <div>Loading Map...</div>;
   return (
     <div>
       <EVInfoPanel
@@ -131,7 +148,7 @@ function MapView() {
         lastUpdate={lastUpdate}
       />
       <ControlButtons
-        fetchLive={fetchLive}
+        fetchLive={recenterPath}
         followEV={followEV}
       />
       <MapContainer
@@ -141,7 +158,10 @@ function MapView() {
         userLocation={userLocation}
         directions={directions}
       />
+      <Footer />
+
     </div>
   );
 }
+
 export default MapView;

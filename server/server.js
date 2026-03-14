@@ -1,6 +1,8 @@
+require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
+
 require("dotenv").config();
 const app = express();
 app.use(cors({
@@ -36,5 +38,7 @@ console.log("PORT VALUE =", PORT);
 console.log("PORT VALUE =", PORT);
 app.listen(PORT, () => {
   console.log("PORT VALUE =", PORT);
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+console.log(apiKey);
   console.log(`Server running on port ${PORT}`);
 });

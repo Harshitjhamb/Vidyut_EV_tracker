@@ -7,9 +7,7 @@ function RouteRenderer({ directions }) {
       options={{
         suppressMarkers: true,
         preserveViewport: true,
-      }}
-    />
-  );
+      }}/>
+    );
 }
-
 export default RouteRenderer;

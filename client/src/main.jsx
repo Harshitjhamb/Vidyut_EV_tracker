@@ -1,6 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import MainScreen from "./components/Mainscreen";
+import EVSelectScreen from "./components/EVselectionScreen";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
