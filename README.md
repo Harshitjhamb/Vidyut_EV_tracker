@@ -1,4 +1,4 @@
-# 🚗 Vidyut – EV Live Tracker
+#  Vidyut – EV Live Tracker
 
 Vidyut is a **full-stack EV tracking dashboard** that displays the **live location of an electric vehicle on Google Maps**, along with route information, speed estimation, ETA, and battery status.
 
@@ -6,21 +6,21 @@ The project demonstrates **real-time data handling, API integration, and cloud d
 
 ---
 
-# 🌐 Live Demo
+#  Live Demo
 
 Frontend: https://vidhyut-ev-tracker.vercel.app
 Backend API: https://vidhyut-ev-tracker.onrender.com/api/live
 
 ---
 
-# ✨ Features
+#  Features
 
-• 📍 **Live Vehicle Tracking** – Displays EV location on Google Maps
-• 🗺 **Route Rendering** – Shows route between user and EV
-• ⚡ **Speed Calculation** – Calculates vehicle speed using GPS coordinate differences
-• 🔋 **Battery Level Display** – Shows current battery percentage
-• ⏱ **ETA Calculation** – Estimated arrival time updates dynamically
-• 🔄 **Live Refresh** – Fetches updated location data from backend API
+•  **Live Vehicle Tracking** – Displays EV location on Google Maps
+•  **Route Rendering** – Shows route between user and EV
+•  **Speed Calculation** – Calculates vehicle speed using GPS coordinate differences
+•  **Battery Level Display** – Shows current battery percentage
+•  **ETA Calculation** – Estimated arrival time updates dynamically
+•  **Live Refresh** – Fetches updated location data from backend API
 • ☁ **Cloud Deployment** – Frontend and backend deployed for global access
 
 ---
